@@ -1,0 +1,11 @@
+{
+  "agent_identity": "hackathon-wallex-agent",
+  "status": "RETIRED_AND_SETTLED_IN_TOMAN",
+  "initial_capital_tmn": 5000000.0,
+  "final_realized_tmn": 5000000.0,
+  "realized_net_profit_tmn": 0.0,
+  "official_return_pct": 0.0,
+  "open_orders_cancelled": 0,
+  "liquidation_orders_executed": [],
+  "retired_at": "2026-10-22T20:03:57.358282+00:00"
+}

@@ -1,0 +1,29 @@
+# Secrets & Environment Variables (CRITICAL GOVERNANCE RULE)
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Python & Packaging
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Next.js / Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Local SQLite Checkpoints & Temporary Caches
+*.sqlite
+*.db
+.DS_Store

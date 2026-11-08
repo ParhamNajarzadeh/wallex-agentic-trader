@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  # 1. Local System-1 Decision Engine (Laya / Mizan-4B / Kev compatible /v1/systemone server)
+  system1-local-server:
+    image: python:3.11-slim
+    container_name: wallex-system1-local
+    working_dir /app
+    command: >
+      python -c "import http.server, json;
+      class H(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+          self.send_response(200); self.send_header('Content-Type','application/json'); self.end_headers();
+          self.wfile.write(json.dumps({'status':'ok','provider':'mizan_local'}).encode())
+      http.server.HTTPServer(('0.0.0.0', 8007), H).serve_forever()"
+    ports:
+      - "8007:8007"
+    restart: unless-stopped
+
+  # 2. Wallex Multi-Agent Trading Engine & AG-UI FastAPI Backend
+  trading-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: python:3.11-slim
+    container_name: wallex-agentic-backend
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env.example
+    command: uvicorn src.api.server:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - system1-local-server
+    restart: unless-stopped
+
+  # 3. Generative UI Dashboard (Next.js App Router + shadcn/ui + CopilotKit AG-UI)
+  genui-frontend:
+    image: node:20-alpine
+    container_name: wallex-genui-frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - trading-backend
+    restart: unless-stopped
