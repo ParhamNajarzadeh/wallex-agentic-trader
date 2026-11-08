@@ -1,263 +1,264 @@
-# موتور معاملاتی هوشمند چند-ایجنته والکس (`wallex-agentic-trader`)
-### معماری Hybrid Graph-Harness مجهز به مدل بنیادین سری زمانی **Kronos**، موتور تصمیم‌گیری فراسریع **System-1 (`Jev` / `Mizan-4B` / `Laya` / `Kev`)** و تحلیلگر کوانت **System-2** برای چالش صرافی والکس در هکاتون Agentic AI استارکوچ
+# Wallex Autonomous Multi-Agent Trading Engine (`wallex-agentic-trader`)
+
+### A Hybrid Graph-Harness Architecture Powered by the **Kronos** Time-Series Foundation Model, Ultra-Fast **System-1 Decision Engine (`Jev` / `Mizan-4B` / `Laya` / `Kev`)**, and **System-2 Quant Analyst** for the Wallex Exchange Challenge in the StarCoach Agentic AI Hackathon
 
 ---
 
-## فهرست مطالب (منطبق بر ۵ محور الزامی داوری فنی والکس — ۳۰۰ امتیاز)
-1. [محور اول: معماری و منطق اصلی الگوریتم (Hybrid Graph-Harness + System-1/System-2 + Kronos)](#1-محور-اول-معماری-و-منطق-اصلی-الگوریتم)
-2. [محور دوم: نحوه استفاده واقعی از هوش مصنوعی و ابزارهای دوگانه والکس (Wallex REST/WS API + Wallex MCP)](#2-محور-دوم-نحوه-استفاده-از-هوش-مصنوعی-و-ابزارهای-والکس)
-3. [محور سوم: شرایط کمی و ایجنتیک تصمیم‌گیری برای خرید، فروش و تسویه تومانی](#3-محور-سوم-شرایط-تصمیمگیری-برای-خرید-و-فروش)
-4. [محور چهارم: روش مدیریت سرمایه، گیت قطعی ریسک (Deterministic Risk Gate) و حاکمیت هوش مصنوعی (AI Governance)](#4-محور-چهارم-روش-مدیریت-سرمایه-ریسک-و-حاکمیت-هوش-مصنوعی)
-5. [محور پنجم: راهنمای اجرای مجدد (Reproducibility)، نتایج Backtesting، Shadow Testing و ممیزی `decision_logs.jsonl`](#5-محور-پنجم-امکان-اجرای-مجدد-و-ارزیابی-عملکرد-الگوریتم)
-6. [داشبورد Generative UI (Chat Plus با Next.js + shadcn/ui + CopilotKit AG-UI/A2UI) و سناریوی ویدیوی دموی ۵ دقیقه‌ای](#6-داشبورد-generative-ui-و-سناریوی-ویدیوی-دموی-۵-دقیقهای)
+## Table of Contents
+1. [Pillar 1: Architecture & Core Algorithm Logic](#1-pillar-1-architecture--core-algorithm-logic)
+2. [Pillar 2: Real AI Usage & Dual Wallex Tools (REST/WS API + Wallex MCP)](#2-pillar-2-real-ai-usage--dual-wallex-tools)
+3. [Pillar 3: Quantitative & Agentic Execution Signals (Buy, Sell & Toman Settlement)](#3-pillar-3-quantitative--agentic-execution-signals)
+4. [Pillar 4: Capital Allocation, Deterministic Risk Gate & AI Governance](#4-pillar-4-capital-allocation-deterministic-risk-gate--ai-governance)
+5. [Pillar 5: Reproducibility, Backtesting, Shadow Testing & `decision_logs.jsonl` Audit](#5-pillar-5-reproducibility-backtesting-shadow-testing--audit)
+6. [Generative UI Dashboard (Chat Plus) & 5-Minute Demo Script](#6-generative-ui-dashboard--5-minute-demo-script)
 
 ---
 
-## ۱. محور اول: معماری و منطق اصلی الگوریتم
+## 1. Pillar 1: Architecture & Core Algorithm Logic
 
-این سیستم یک **موتور معاملات الگوریتمی اسپات (Spot) ۱۰۰٪ خودکار، تکرارپذیر و قابل ممیزی** است که به صورت اختصاصی برای مدیریت سرمایه اولیه **`5,000,000` تومان (طرح اعتبار معاملاتی والکس)** در بازه ۷۲ ساعته هکاتون طراحی شده است.
+This system is a **100% autonomous, reproducible, and auditable Spot algorithmic trading engine**, custom-tailored to manage an initial capital of **`5,000,000` Tomans (Wallex Credit Line)** across the 72-hour hackathon trading window.
 
-### چالش معماری: چرا ترکیب `StateGraph` (LangGraph) و `ReAct Harness`؟
-استفاده از یک حلقه `ReAct` خام در معاملات مالی ریسک فراخوانی جابه‌جای ابزارها، افتادن در حلقه بی‌نهایت هنگام خطای شبکه و نقض قوانین ریسک را به همراه دارد. از سوی دیگر، یک اسکریپت صلب مبتنی بر شرط‌های `if/else` فاقد درک پویا از تغییر رژیم بازار بوده و ۳۵ امتیاز معیار **«استفاده واقعی از Agentic AI»** را از دست می‌دهد.
+### Architectural Rationale: Why Combine `StateGraph` (LangGraph) and `ReAct Harness`?
+Relying on an unconstrained `ReAct` loop in live financial execution creates severe vulnerabilities: tool-calling hallucinations, infinite retry loops during network degradation, and risk rule breaches. Conversely, rigid procedural `if/else` scripts fail to perceive dynamic market regime shifts and forfeit points under the **"Authentic Use of Agentic AI"** evaluation criteria.
 
-در معماری **Hybrid Graph-Harness** این پروژه:
-- **کنترل جریان کلان و قطعی (Macro-Orchestration)** بر عهده یک گراف ۸ ایستگاهی در **LangGraph (`StateGraph`)** مجهز به `MemorySaver` و مکانیزم توقف کلان `interrupt()` است.
-- **تفکیک شناختی System-1 و System-2** مانع از اتلاف زمان (Latency) و مصرف توکن در سیکل‌های بدون سیگنال می‌شود:
-  - **ایستگاه پیش‌بینی کمی سری زمانی (`KronosForecastAgent`)**: مبتنی بر مدل بنیادین کندل‌استیک **[shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos)** (`NeoQuasar/Kronos-small` + `NeoQuasar/Kronos-Tokenizer-base`) که توزیع احتمالی ۱۲ کندل آینده (`OHLCV`)، بازده مورد انتظار (`expected_return_pct`)، احتمال سود خالص پس از کسر کارمزد (`upside_probability`) و بدترین افت پیش‌بینی‌شده (`predicted_low_min`) را استخراج می‌کند.
-  - **موتور تصمیم‌گیری فراسریع System-1 (`System1RegimeRouterNode`)**: کلاینت واحد بر پایه پروتکل `/v1/systemone` که با پشتیبانی از ۴ بک‌اند **[Jev (MetisAI TypeSafe)](https://docs.metisai.ir/api/wrapper/typesafe)**، **[Mizan-4B](https://huggingface.co/xmanii/Mizan-4B)** (مدل تصمیم‌گیری بومی و فارسی‌محور روی Qwen3.5-4B)، **[Laya](https://github.com/NandhaKishorM/laya)** (روتر غیرخودهمبسته ۳۳ میلی‌ثانیه‌ای LangGraph) و **[Kev](https://github.com/jaredpalmer/kev)**، در یک پاس رو به جلو (زیر ۵۰ میلی‌ثانیه) احتمالات کالیبره‌شده رژیم بازار (`BULL_TREND`, `RANGE_SCALP`, `HIGH_VOL_PUMP_DUMP`, `NIGHT_THIN_LIQUIDITY`)، گیت اقدام و مهارت مورد نیاز (`SKILL.md`) را تعیین می‌کند.
-  - **مغز تحلیلگر کوانت System-2 (`System2QuantAnalystAgent`)**: مبتنی بر **DeepSeek V4.1 Flash** در یک **ReAct Harness** مهندسی‌شده که تنها به **۳ مگا-تول (Mega-Tools)**، مهارت‌های بارگذاری تدریجی (`skills/*/SKILL.md`) و حافظه کاری/اپیزودیک فایل‌محور دسترسی دارد و پیشنهاد ساختاریافته معامله (`TradeProposal`) را به همراه استدلال کامل فارسی و انگلیسی تولید می‌نماید.
+In this **Hybrid Graph-Harness** architecture:
+- **Macro-Orchestration:** Managed by an 8-station **LangGraph (`StateGraph`)** equipped with `MemorySaver` checkpoints and an explicit `interrupt()` mechanism for governance.
+- **System-1 / System-2 Cognitive Decoupling:** Eliminates latency overhead and prevents token burn during non-actionable market regimes:
+  - **Quantitative Time-Series Forecasting (`KronosForecastAgent`)**: Built on the open-source candlestick foundation model **[shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos)** (`NeoQuasar/Kronos-small` + `NeoQuasar/Kronos-Tokenizer-base`). It projects the probability distribution over the next 12 candles (`OHLCV`), expected return (`expected_return_pct`), fee-adjusted net win probability (`upside_probability`), and the minimum expected downside price (`predicted_low_min`).
+  - **Ultra-Fast System-1 Decision Engine (`System1RegimeRouterNode`)**: A unified client based on the `/v1/systemone` protocol supporting 4 backends: **[Jev (MetisAI TypeSafe)](https://docs.metisai.ir/api/wrapper/typesafe)**, **[Mizan-4B](https://huggingface.co/xmanii/Mizan-4B)**, **[Laya](https://github.com/NandhaKishorM/laya)** (33ms non-autoregressive LangGraph router), and **[Kev](https://github.com/jaredpalmer/kev)**. In a single forward pass (< 50ms), it outputs calibrated regime probabilities (`BULL_TREND`, `RANGE_SCALP`, `HIGH_VOL_PUMP_DUMP`, `NIGHT_THIN_LIQUIDITY`), gating flags, and the relevant active skill (`SKILL.md`).
+  - **System-2 Quant Analyst Brain (`System2QuantAnalystAgent`)**: Powered by **DeepSeek V4.1 Flash** within an engineered **ReAct Harness**. It accesses only **3 Mega-Tools**, dynamically disclosed skills (`skills/*/SKILL.md`), and structured memory, generating validated `TradeProposal` objects accompanied by transparent analytical reasoning.
 
 ```text
 [EXECUTION_MODE: BACKTEST | SHADOW | LIVE]
         │
         ▼
 [1. MarketScannerNode (Async Python + Wallex REST/WS API: https://api.wallex.ir)]
-   - دریافت /v1/markets، /v1/depth، /v1/trades و کندل‌های /v1/udf/history
-   - محاسبه آلفا/بتا/گامای ریزساختار، OrderBook Imbalance (OBI)، Spread، RSI و ATR
-   - فیلتر کردن ۲ تا ۳ جفت‌ارز برتر مجاز اعتبار معاملاتی دارای ناهنجاری حجمی/قیمتی
+   - Fetches /v1/markets, /v1/depth, /v1/trades, and /v1/udf/history candles
+   - Calculates Microstructure Alpha/Beta/Gamma, OrderBook Imbalance (OBI), Spread, RSI, ATR
+   - Filters top 2-3 eligible credit-trading pairs exhibiting volume/price anomalies
         │
         ├───────────────────────────────────────────┐
         ▼                                           ▼
 [2A. KronosForecastNode (Quantitative)]     [2B. SentimentGuardNode (Isolated Subagent)]
-   - مدل: shiyu-coder/Kronos                   - رصد ایزوله اخبار/تلگرام بدون دسترسی به .env
-     (NeoQuasar/Kronos-small + Tokenizer)      - فیلتر Prompt Injection و امتیازدهی با Mizan-4B
-   - پیش‌بینی چندگامی کندل‌های OHLCV،            - بدون دسترسی به هیچ ابزار معاملاتی (شکستن
-     E[Return]، Upside Prob و کمینه قیمت         مثلث مرگبار سایمون ویلسون)
+   - Model: shiyu-coder/Kronos                 - Isolated news/feed monitoring without .env access
+     (NeoQuasar/Kronos-small + Tokenizer)      - Neutralizes prompt injection & scores with Mizan-4B
+   - Multi-step OHLCV candlestick projection,  - Zero access to trading tools (Breaks Simon Willison's
+     E[Return], Upside Prob, Predicted Low       Lethal Trifecta)
         │                                           │
         └─────────────────────┬─────────────────────┘
-                              ▼
+                               ▼
 [3. System1RegimeRouterNode (Unified /v1/systemone Decision Engine)]
-   - بک‌اند ابری: Jev (MetisAI TypeSafe) | بک‌اندهای لوکال: Mizan-4B، Laya (33ms)، Kev
-   - خروجی احتمالات کالیبره‌شده برای:
+   - Cloud: Jev (MetisAI TypeSafe) | Local: Mizan-4B, Laya (33ms), Kev
+   - Outputs calibrated probabilities:
      * market_regime: BULL_TREND | RANGE_SCALP | HIGH_VOL_PUMP_DUMP | NIGHT_THIN_LIQUIDITY
      * action_gate: PROCEED_TO_SYSTEM2 | FAST_HOLD | EMERGENCY_LIQUIDATE
      * active_skill: orderbook_scalp | risk_management | toman_settlement
-                              │
-                              ▼
+                               │
+                               ▼
 [4. System2QuantAnalystNode (ReAct Harness + DeepSeek V4.1 Flash / LLM)]
-   - مجهز به ۳ مگا-تول (Mega-Tools) + بارگذاری تدریجی مهارت‌ها (Progressive Disclosure SKILL.md)
-   - ترکیب پیش‌بینی Kronos + عدم تقارن اردربوک + حافظه کاری (active_positions_plan.json)
-   - تولید TradeProposal ساختاریافته + استدلال شفاف فارسی (reasoning_log_fa)
-                              │
-                              ▼
+   - 3 Curated Mega-Tools + Progressive Disclosure (SKILL.md)
+   - Blends Kronos Forecast + OrderBook Asymmetry + Working Memory (active_positions_plan.json)
+   - Emits structured TradeProposal + transparent reasoning log
+                               │
+                               ▼
 [5. DeterministicRiskGateNode (100% Pure Python Guardrail + Kev/Laya Policy Check)]
-   - ممیزی قطعی ۸ قانون خط قرمز: لیست مجاز اعتبار معاملاتی، سقف ۱۸٪ هر سفارش (<=900,000 TMN)،
-     حداقل ۴۰٪ ذخیره نقد تومانی (>=2,000,000 TMN)، حد ضرر پویا (۱.۵٪ تا ۲٪)، Net R/R >= 2.0،
-     جلوگیری از معامله با خود (Self-Trade Prevention)، تطبیق نقدینگی شبانه، مدارقطع‌کن ۳٪ افت
-     روزانه و گیت تسویه اجباری ۱۰۰٪ به تومان در ۴ ساعت پایانی چالش
-                              │
-                              ▼
+   - Validates 8 hard-line safety rules: Whitelisted markets, 18% max per order (<=900,000 TMN),
+     40% minimum cash reserve (>=2,000,000 TMN), Dynamic Stop-Loss (1.5%-2%), Net R/R >= 2.0,
+     Self-Trade Prevention (STP), Night liquidity adaptation, 3% Daily Max Drawdown Circuit Breaker,
+     and Mandatory 100% Toman Liquidation Gate in the final 4 hours
+                               │
+                               ▼
 [6. MacroHITLInterruptNode (LangGraph interrupt() + MemorySaver Checkpointer)]
-   - عبور ۱۰۰٪ خودکار برای معاملات خرد (رعایت ممنوعیت مطلق معامله دستی)
-   - توقف صرفاً در رویدادهای حاکمیتی کلان: ارتقای Shadow به Live، تغییر SKILL یا ریست مدارقطع‌کن
-                              │
-                              ▼
+   - 100% Autonomous passthrough for micro-trades (Honors zero manual intervention rule)
+   - Suspends execution strictly for macro governance events: Shadow-to-Live elevation,
+     skill hot-swapping, or circuit breaker manual override
+                               │
+                               ▼
 [7. ExecutionAndLoggerNode (Wallex MCP + REST Fallback + Stale Price Refresh)]
-   - رفرش لحظه‌ای best_bid / best_ask دفترچه سفارشات جهت جلوگیری از Stale Price (آستانه ۰.۴٪)
-   - اجرای سفارش از طریق Wallex MCP (در حالت LIVE) یا MockOrderBookMatcher (در حالت SHADOW/BACKTEST)
-   - ثبت لاگ تغییرناپذیر در فایل logs/decision_logs.jsonl
-                              │
-                              ▼
+   - Real-time refresh of order book best_bid / best_ask to eliminate Stale Price execution (0.4% threshold)
+   - Order placement via Wallex MCP (LIVE mode) or MockOrderBookMatcher (SHADOW/BACKTEST mode)
+   - Appends immutable execution traces to logs/decision_logs.jsonl
+                               │
+                               ▼
 [8. EvaluatorAndCompactionNode (Evaluator-Optimizer Reflection + OpenCode Compaction)]
-   - کالبدشکافی سیکل‌های بسته‌شده به تومان و ثبت درس‌آموخته در memory/learned_trading_rules.md
-   - فشرده‌سازی خودکار تاریخچه پیام‌ها هنگام عبور از آستانه ۱۲,۰۰۰ توکن
+   - Post-mortem analysis on closed cycles with lessons recorded to memory/learned_trading_rules.md
+   - Autonomous conversation history compaction upon crossing 12,000 tokens
 ```
 
 ---
 
-## ۲. محور دوم: نحوه استفاده از هوش مصنوعی و ابزارهای والکس
+## 2. Pillar 2: Real AI Usage & Dual Wallex Tools
 
-### ۲.۱. معماری دولایه ارتباط با صرافی والکس (`Wallex REST/WS API` + `Wallex MCP`)
-طبق راهنمایی تیم فنی مارکت‌میکینگ والکس و مستندات رسمی [developers.wallex.ir](https://developers.wallex.ir/docs):
-1. **لایه اول — دریافت پرتکرار و کم‌تاخیر داده‌های بازار (`src/wallex/rest_client.py`):**
-   - فراخوانی ناهمگام (`httpx.AsyncClient`) اندپوینت‌های `GET /v1/markets` (مشخصات بازارها و دقت اعشار `tick_size` / `step_size`)، `GET /v1/depth?symbol={SYMBOL}` (عمق دفترچه سفارشات لحظه‌ای)، `GET /v1/trades?symbol={SYMBOL}` (جریان معاملات اخیر) و `GET /v1/udf/history` (کندل‌های تاریخی OHLCV).
-   - شنونده زنده WebSocket (`wss://api.wallex.ir/ws`) روی کانال‌های `{symbol}@depth` و `{symbol}@trade` جهت به‌روزرسانی کش محلی قیمت‌ها در کسری از ثانیه.
-2. **لایه دوم — عملیات حساب و سفارش‌گذاری ایجنتیک با Wallex MCP (`src/wallex/mcp_client.py`):**
-   - اتصال به سرور **Wallex MCP** (با پشتیبانی از فراخوانی مستقیم اندپوینت‌های `/v1/account/balances`، `/v1/account/fee`، `/v1/account/openOrders` و `POST /v1/account/orders` با هدر `x-api-key`).
-   - **مکانیزم حیاتی Stale Price Refresh**: از آنجا که استدلال مدل هوش مصنوعی ممکن است چند صد میلی‌ثانیه زمان ببرد، ماژول `WallexMCPClient.place_order` دقیقاً در لحظه ارسال سفارش، آخرین `best_bid` و `best_ask` دفترچه سفارشات را مجدداً استعلام می‌کند؛ اگر قیمت بیش از `MAX_PRICE_DRIFT_PCT = 0.40%` جابه‌جا شده باشد، سفارش با قیمت کهنه مسدود یا به قیمت امن رفرش می‌شود.
+### 2.1. Dual-Layer Integration with Wallex Exchange (`REST/WS API` + `Wallex MCP`)
+In compliance with official technical documentation ([developers.wallex.ir](https://developers.wallex.ir/docs)):
+1. **Layer 1 — Low-Latency Market Data Feed (`src/wallex/rest_client.py`):**
+   - High-throughput asynchronous queries via `httpx.AsyncClient` to `GET /v1/markets` (market precision, `tick_size`, and `step_size`), `GET /v1/depth?symbol={SYMBOL}` (order book depth), `GET /v1/trades?symbol={SYMBOL}` (public tape), and `GET /v1/udf/history` (OHLCV candles).
+   - Live WebSocket listener (`wss://api.wallex.ir/ws`) streaming `{symbol}@depth` and `{symbol}@trade` channels to keep local price books updated in fractions of a second.
+2. **Layer 2 — Account Operations & Agentic Execution via Wallex MCP (`src/wallex/mcp_client.py`):**
+   - Integration with **Wallex MCP Server** supporting `/v1/account/balances`, `/v1/account/fee`, `/v1/account/openOrders`, and `POST /v1/account/orders` authenticated via `x-api-key`.
+   - **Crucial Stale Price Refresh Mechanism:** Because model reasoning requires several hundred milliseconds, `WallexMCPClient.place_order` re-queries the latest `best_bid` and `best_ask` at the exact millisecond of dispatch. If prices have drifted beyond `MAX_PRICE_DRIFT_PCT = 0.40%`, stale orders are halted or re-priced safely.
 
-### ۲.۲. مهندسی هارنس (Harness Engineering) و بهینه‌سازی پنجره محتوایی
-برای جلوگیری از چهار عارضه پنجره محتوایی (**Poisoning, Confusion, Conflict, Distraction**):
-- **۳ مگا-تول دسته‌بندی‌شده (`src/harness/mega_tools.py`)**: به جای معرفی ده‌ها اندپوینت مجزا که کانتکست مدل را پر می‌کنند، تنها ۳ مگا-تول با اسکیمای دقیق Pydantic به ایجنت معرفی شده‌اند:
-  1. `wallex_market_intelligence`: دریافت ریزساختار اردربوک، پیش‌بینی کندل Kronos، ضرایب آلفا/بتا/گاما و وضعیت بازارهای مجاز.
-  2. `wallex_trade_executor`: ثبت پیشنهاد سفارش (`propose_order`)، لغو سفارش باز، استعلام موجودی/سفارش‌های باز و تسویه کامل به تومان (`liquidate_all_to_toman`).
-  3. `agent_memory_and_skills`: بارگذاری فایل‌های مهارت (`load_skill_markdown`)، خواندن/به‌روزرسانی برنامه پوزیشن‌های باز و ثبت قواعد یادگرفته‌شده.
-- **افشای تدریجی مهارت‌ها (`skills/*/SKILL.md` و `src/harness/skill_loader.py`)**: در سیستم‌پرامپت اولیه فقط نام و توضیح یک‌خطی مهارت‌ها قرار می‌گیرد و متن کامل فرمول‌ها (`orderbook_scalp`, `risk_management`, `toman_settlement`) تنها در صورت نیاز بارگذاری می‌شود.
-- **حافظه سهلایه‌ای و حلقه خودآموز (`src/harness/memory_manager.py` و `compaction.py`)**:
-  - حافظه کوتاه‌مدت درونسشنی با `MemorySaver` در LangGraph.
-  - حافظه کاری فایل‌محور در `memory/active_positions_plan.json` برای حفظ برنامه خروج هر پوزیشن باز در طول ۷۲ ساعت.
-  - حافظه اپیزودیک خودآموز در `memory/learned_trading_rules.md` به همراه فشرده‌ساز خودکار کانتکست به سبک OpenCode.
+### 2.2. Harness Engineering & Context Window Optimization
+To prevent context window degradation (**Poisoning, Confusion, Conflict, Distraction**):
+- **3 Curated Mega-Tools (`src/harness/mega_tools.py`)**: Replaces dozens of fine-grained API endpoints with 3 typed Pydantic tools:
+  1. `wallex_market_intelligence`: Order book microstructure, Kronos projections, alpha/beta/gamma coefficients, and whitelisted market metrics.
+  2. `wallex_trade_executor`: Order proposal submission (`propose_order`), cancellation, balance queries, and complete liquidation (`liquidate_all_to_toman`).
+  3. `agent_memory_and_skills`: Skill loading (`load_skill_markdown`), active position management, and recording learned trade strategies.
+- **Progressive Skill Disclosure (`skills/*/SKILL.md` & `src/harness/skill_loader.py`)**: The system prompt only contains high-level descriptions. Full formulas (`orderbook_scalp`, `risk_management`, `toman_settlement`) are lazily imported only when required by the market regime.
+- **Three-Tier Memory Architecture (`src/harness/memory_manager.py` & `compaction.py`)**:
+  - Intra-session short-term memory via LangGraph `MemorySaver`.
+  - File-backed working memory in `memory/active_positions_plan.json` tracking exit criteria for open trades over the 72-hour window.
+  - Self-learning episodic memory in `memory/learned_trading_rules.md` paired with OpenCode-style context compaction.
 
 ---
 
-## ۳. محور سوم: شرایط تصمیم‌گیری برای خرید و فروش
+## 3. Pillar 3: Quantitative & Agentic Execution Signals
 
-تصمیمات خرید و فروش بر پایه همگرایی سه لایه کمی و ایجنتیک اتخاذ می‌شوند (`src/wallex/microstructure.py` + `src/models/kronos_forecaster.py` + `skills/orderbook_scalp/SKILL.md`):
+Trading decisions originate from the confluence of three analytical layers (`src/wallex/microstructure.py` + `src/models/kronos_forecaster.py` + `skills/orderbook_scalp/SKILL.md`):
 
-### ۳.۱. شاخص‌های کمی ریزساختار بازار (Microstructure Alphas)
-1. **عدم تقارن فشار دفترچه سفارشات (OrderBook Imbalance - OBI)** در ۵ سطح برتر:
+### 3.1. Market Microstructure Indicators
+1. **OrderBook Imbalance (OBI)** across the top 5 depth levels:
    $$\text{OBI}_5 = \frac{\sum_{i=1}^{5} V_{\text{bid}, i} - \sum_{i=1}^{5} V_{\text{ask}, i}}{\sum_{i=1}^{5} V_{\text{bid}, i} + \sum_{i=1}^{5} V_{\text{ask}, i}} \in [-1, +1]$$
-2. **آلفای ریزساختار ($\alpha_{\text{micro}}$)** (فشار قیمت میانی وزنی حجم نسبت به قیمت میانی ساده):
+2. **Microstructure Alpha ($\alpha_{\text{micro}}$)** (Volume-Weighted Midpoint vs Simple Midpoint):
    $$P_{\text{micro}} = \frac{P_{\text{bid}, 1} \cdot V_{\text{ask}, 1} + P_{\text{ask}, 1} \cdot V_{\text{bid}, 1}}{V_{\text{bid}, 1} + V_{\text{ask}, 1}}, \quad \alpha_{\text{micro}} = \frac{P_{\text{micro}} - P_{\text{mid}}}{P_{\text{mid}}} \times 10000 \text{ (bps)}$$
-3. **بتای جریان سفارشات ($\beta_{\text{flow}}$)** از روی معاملات اخیر (`/v1/trades`) و **گامای شتاب حجم کندل ($\gamma_{\text{mom}}$)**.
+3. **Order Flow Beta ($\beta_{\text{flow}}$)** derived from `/v1/trades` and **Candle Volume Momentum Gamma ($\gamma_{\text{mom}}$)**.
 
-### ۳.۲. شروط ورود به معامله خرید (`BUY`)
-سفارش خرید (`LIMIT` روی `best_bid * (1 + 0.0002)` جهت بهره‌مندی از کارمزد Maker و حذف هزینه اسپرد) تنها زمانی صادر می‌شود که:
-- $\text{OBI}_5 \ge +0.18$ و $\alpha_{\text{micro}} > +0.5 \text{ bps}$ (برتری تقاضا در دفترچه سفارشات).
-- اسپرد لحظه‌ای دفترچه سفارشات $\text{Spread (\%)} \le 0.35\%$.
-- پیش‌بینی ۱۲ کندلی مدل **Kronos** نشان دهد: `expected_return_pct >= +0.85%` و `upside_probability >= 0.58`.
-- شاخص `RSI(14)` در محدوده اشباع خرید نباشد ($\text{RSI}_{14} < 68$).
-- نسبت سود خالص مورد انتظار به ریسک پس از کسر دو طرف کارمزد والکس ($2 \times 0.25\%$) و اسپرد، حداقل **`expected_net_rr >= 2.0`** باشد.
+### 3.2. Long Entry Criteria (`BUY`)
+A `BUY` order (`LIMIT` pegged at `best_bid * (1 + 0.0002)` to capture Maker rebates and bypass spread costs) is triggered only when:
+- $\text{OBI}_5 \ge +0.18$ and $\alpha_{\text{micro}} > +0.5 \text{ bps}$ (Demonstrated buy-side order book pressure).
+- Current Order Book Spread $\text{Spread (\%)} \le 0.35\%$.
+- 12-candle **Kronos** projection confirms: `expected_return_pct >= +0.85%` and `upside_probability >= 0.58`.
+- Relative Strength Index `RSI(14)` is below overbought territory ($\text{RSI}_{14} < 68$).
+- Fee-adjusted net reward-to-risk ratio (after two-way Wallex fees $2 \times 0.25\%$ and spread) fulfills **`expected_net_rr >= 2.0`**.
 
-### ۳.۳. شروط خروج، حد سود (`SELL`) و تسویه اجباری به تومان (`LIQUIDATE_ALL_TO_TOMAN`)
-- **حد ضرر پویا (Dynamic Stop-Loss)**: تنظیم خودکار بین `1.5%` تا `2.0%` زیر قیمت ورود بر مبنای $\max(1.5 \times \text{ATR}, \text{Kronos Predicted Low})$.
-- **خروج هوشمند تحلیلگر**: هرگاه روی یک پوزیشن باز، $\text{OBI}_5 < -0.22$ شود یا پیش‌بینی Kronos منفی گردد (`expected_return_pct < -0.30%`) یا قیمت به `take_profit` برسد، سفارش فروش صادر می‌شود.
-- **بستن چرخه به تومان (100% Realized PnL in TMN)**: مطابق قانون صریح چالش («سود یا ضرر حاصل‌شده باید در تومان محقق شود و نباید در پایان دوره دارایی به صورت کوین باشد»)، در ۴ ساعت پایانی چالش (`hours_remaining_in_challenge <= 4.0`) هرگونه خرید جدید مسدود شده و کلیه موجودی‌های کوینی و تتری به تومان نقد می‌شوند.
-
----
-
-## ۴. محور چهارم: روش مدیریت سرمایه، ریسک و حاکمیت هوش مصنوعی
-
-### ۴.۱. گیت قطعی مدیریت ریسک (`src/governance/risk_gate.py`)
-نود پایتونی `DeterministicRiskGateNode` پیش از اجرای هر سفارش، ۸ شرط زیر را بدون دخالت LLM به صورت ۱۰۰٪ قطعی اعمال می‌کند:
-
-| ردیف | قانون مدیریت ریسک و انضباطی | پارامتر اجرایی روی سرمایه ۵,۰۰۰,۰۰۰ تومان | رفتار گیت ریسک در صورت نقض |
-| :--- | :--- | :--- | :--- |
-| **۱** | **لیست سفید بازارهای مجاز** | `ALLOWED_CREDIT_MARKETS` (`USDTTMN`, `BTCTMN`, `ETHTMN`, `SOLTMN`, ...) | رد فوری سفارش (`REJECT`) |
-| **۲** | **سقف کسری حجم هر سفارش** | حداکثر **`18%`** کل پرتفوی (**حداکثر `900,000` تومان** در هر سفارش) | تعدیل خودکار حجم (`adjusted_quantity`) به سقف ۱۸٪ |
-| **۳** | **ذخیره نقدی احتیاطی تومانی** | حفظ حداقل **`40%`** نقد تومانی (**حداقل `2,000,000` تومان** آزاد) | کاهش حجم سفارش یا رد در صورت نبود نقدینگی بالای ۴۰٪ |
-| **۴** | **حد ضرر پویا و ریسک به ریوارد** | حد ضرر اجباری **`1.5%` تا `2.0%`** (حداکثر ریسک ~۱۸,۰۰۰ تومان) و **`Net R/R >= 2.0`** | اصلاح خودکار حد ضرر/سود یا رد سفارش‌های کم‌بازده |
-| **۵** | **جلوگیری از معامله با خود (STP)** | بررسی `openOrders` حساب جهت عدم تداخل قیمت سفارش جدید با سفارش باز خود ایجنت | رد سفارش متداخل (`SELF_TRADE_PREVENTION`) |
-| **۶** | **تطبیق نقدینگی شبانه** | ساعات `00:30` تا `07:00` تهران یا اسپرد بالای `0.35%` | نصف کردن سقف حجم سفارش (`9%` معادل ۴۵۰,۰۰۰ تومان) و تبدیل `MARKET` به `LIMIT` |
-| **۷** | **مدارقطع‌کن افت سرمایه (Circuit Breaker)** | افت روزانه بیش از **`3.0%`** نسبت به سقف ارزش حساب (High-Water Mark) | توقف خرید و انتقال خودکار به وضعیت `SHADOW` (Cooldown) |
-| **۸** | **تسویه اجباری پایان چالش به تومان** | `hours_remaining_in_challenge <= 4.0` | مسدودسازی کامل `BUY` و نقد کردن ۱۰۰٪ دارایی‌ها به تومان |
-
-### ۴.۲. حاکمیت هوش مصنوعی (AI Governance) و شکستن «مثلث مرگبار» (`src/governance/security_guard.py`)
-بر اساس اصول کارگاه AI Governance (گدار AI / تحلیل حادثه ۹ ثانیه Pocket.co) و چارچوب سایمون ویلسون:
-1. **شکستن مثلث مرگبار (Breaking the Lethal Trifecta)**:
-   - ساب‌ایجنت رصد اخبار (`SentimentGuardNode`) در محیط کاملاً ایزوله بدون دسترسی به `.env` و بدون دسترسی به ابزارهای معاملاتی اجرا می‌شود و متن ورودی را با فیلتر تشخیص Prompt Injection فارسی/انگلیسی پاک‌سازی می‌کند.
-   - کلیدهای خصوصی (`WALLEX_API_KEY`, `METIS_API_KEY`, `LLM_API_KEY`) هرگز وارد پرامپت یا کانتکست مدل نمی‌شوند و دسترسی ابزار خواندن فایل به `.env` در سطح کد مسدود شده است.
-2. **هویت اختصاصی و انقضای خودکار کلید (`AGENT_VIRTUAL_USER_ID=hackathon-wallex-agent`)**: بررسی مستمر `AGENT_KEY_EXPIRES_AT` پیش از هر سیکل معاملاتی.
-3. **پروتکل بازنشستگی ایمن (`scripts/retire_agent.py`)**: لغو کلیه سفارش‌های باز، نقد کردن ۱۰۰٪ پرتفوی به تومان، تولید گزارش نهایی سود و زیان محقق‌شده و ایجاد قفل دائمی `logs/agent_retired.lock`.
+### 3.3. Exit Criteria, Take Profit (`SELL`) & Mandatory Toman Settlement (`LIQUIDATE_ALL_TO_TOMAN`)
+- **Dynamic Stop-Loss:** Calculated dynamically between `1.5%` and `2.0%` below entry based on $\max(1.5 \times \text{ATR}, \text{Kronos Predicted Low})$.
+- **Intelligent Alpha Exit:** If an open position encounters adverse order book skew ($\text{OBI}_5 < -0.22$), a negative Kronos forecast (`expected_return_pct < -0.30%`), or reaches target profit, an exit order is placed immediately.
+- **100% Realized PnL in Toman:** Per hackathon regulations ("All profit and loss must be realized in Toman and no crypto assets may be held at close"), new buy orders are hard-blocked during the final 4 hours (`hours_remaining_in_challenge <= 4.0`), and all open crypto and USDT holdings are systematically liquidated to Toman.
 
 ---
 
-## ۵. محور پنجم: امکان اجرای مجدد و ارزیابی عملکرد الگوریتم
+## 4. Pillar 4: Capital Allocation, Deterministic Risk Gate & AI Governance
 
-### ۵.۱. ساختار کامل مخزن پروژه
+### 4.1. Deterministic Risk Gate (`src/governance/risk_gate.py`)
+`DeterministicRiskGateNode` enforces 8 programmatic invariants prior to execution without LLM dependency:
+
+| # | Governance & Risk Rule | Operational Parameter (5,000,000 TMN Capital) | Gate Enforcement Action |
+| :-: | :--- | :--- | :--- |
+| **1** | **Whitelisted Markets** | `ALLOWED_CREDIT_MARKETS` (`USDTTMN`, `BTCTMN`, `ETHTMN`, `SOLTMN`, ...) | Instant `REJECT` |
+| **2** | **Maximum Order Size Cap** | Max **`18%`** of portfolio (**Cap of `900,000` TMN** per order) | Automatic quantity trimming (`adjusted_quantity`) to 18% |
+| **3** | **Emergency Cash Reserve** | Minimum **`40%`** held in Toman cash (**At least `2,000,000` TMN** unencumbered) | Position size reduction or rejection if cash < 40% |
+| **4** | **Dynamic Stop-Loss & R/R** | Mandatory stop-loss of **`1.5%` – `2.0%`** (Max risk ~18,000 TMN) with **`Net R/R >= 2.0`** | Auto-adjustment of stop/target or rejection |
+| **5** | **Self-Trade Prevention (STP)** | Cross-checks account `openOrders` to prevent matching against own bids/asks | Rejection of conflicting order (`SELF_TRADE_PREVENTION`) |
+| **6** | **Night Liquidity Adaptation** | 00:30 to 07:00 Tehran time or spread > `0.35%` | Order size halved (`9%` = 450,000 TMN) and `MARKET` forced to `LIMIT` |
+| **7** | **Daily Drawdown Circuit Breaker** | Daily drawdown exceeding **`3.0%`** from portfolio High-Water Mark | Immediate trading halt and transition to `SHADOW` cooldown |
+| **8** | **Final Toman Liquidation Gate** | `hours_remaining_in_challenge <= 4.0` | `BUY` orders disabled; 100% portfolio liquidated to Toman |
+
+### 4.2. AI Governance & Simon Willison's Lethal Trifecta (`src/governance/security_guard.py`)
+- **Breaking the Lethal Trifecta:**
+  - The news monitor (`SentimentGuardNode`) runs in complete isolation without access to `.env` or trading execution tools. Inbound text is sanitized using multilingual prompt-injection filters.
+  - Private API keys (`WALLEX_API_KEY`, `METIS_API_KEY`, `LLM_API_KEY`) are never exposed to LLM context. Direct filesystem reads of `.env` are blocked at code level.
+- **Dedicated Agent Identity & Automatic Expiry (`AGENT_VIRTUAL_USER_ID=hackathon-wallex-agent`)**: Continually validates `AGENT_KEY_EXPIRES_AT` prior to every execution cycle.
+- **Graceful Retirement Protocol (`scripts/retire_agent.py`)**: Cancels all pending orders, liquidates 100% of holdings to Toman, compiles the final PnL audit, and commits an immutable `logs/agent_retired.lock`.
+
+---
+
+## 5. Pillar 5: Reproducibility, Backtesting, Shadow Testing & Audit
+
+### 5.1. Repository Layout
 ```text
 wallex-agentic-trader/
-├── .env.example                       # قالب متغیرهای محیطی (بدون هیچ کلید واقعی)
-├── .gitignore                         # مسدودسازی کامل .env و کش‌ها
-├── pyproject.toml                     # وابستگی‌های استاندارد پایتون
-├── docker-compose.yml                 # اجرای یکپارچه بک‌اند، فرانت‌اند و سرویس مدل لوکال
-├── README.md                          # مستند فنی جامع ۵ محوری داوری + راهنمای اجرای مجدد
-├── skills/                            # کتابخانه مهارت‌ها با افشای تدریجی (Progressive Disclosure)
+├── .env.example                       # Environment template (No secrets)
+├── .gitignore                         # Blocks .env, caches, and local databases
+├── pyproject.toml                     # Python dependencies
+├── docker-compose.yml                 # Orchestrates backend, frontend, and local models
+├── README.md                          # Comprehensive 5-pillar technical documentation
+├── skills/                            # Progressive disclosure skill library
 │   ├── orderbook_scalp/SKILL.md
 │   ├── risk_management/SKILL.md
-│   └── toman_settlement/SKILL.md
-├── memory/                            # حافظه کاری و اپیزودیک فایل‌محور هارنس
+│   └── recovery_settlement/SKILL.md
+├── memory/                            # Harness working and episodic memory
 │   ├── active_positions_plan.json
 │   └── learned_trading_rules.md
-├── logs/                              # تحویلی الزامی لاگ تصمیمات به داوران
+├── logs/                              # Audit logs submitted for evaluation
 │   └── decision_logs.jsonl
-├── evaluation_results/                # خروجی‌های اثبات فنی برای ۲۰ امتیاز تست
+├── evaluation_results/                # Proof-of-performance benchmarks
 │   ├── backtest_report.json
 │   └── shadow_test_summary.json
 ├── src/
-│   ├── config.py                      # تنظیمات مرکزی، لیست بازارهای مجاز اعتبار معاملاتی و پارامترهای ریسک
+│   ├── config.py                      # Central configuration & risk settings
 │   ├── wallex/
-│   │   ├── rest_client.py             # کلاینت کم‌تاخیر Wallex REST & WebSocket
-│   │   ├── mcp_client.py              # کلاینت Wallex MCP Server + اجرای سفارش با Stale Price Refresh
-│   │   └── microstructure.py          # محاسبه آلفا، بتا، گاما، OrderBook Imbalance، Spread و ATR
+│   │   ├── rest_client.py             # Low-latency REST & WebSocket client
+│   │   ├── mcp_client.py              # Wallex MCP client with Stale Price Refresh
+│   │   └── microstructure.py          # Alpha, Beta, Gamma, OBI, Spread, and ATR engine
 │   ├── models/
-│   │   ├── kronos_forecaster.py       # ادغام مدل shiyu-coder/Kronos برای پیش‌بینی احتمالی کندل‌های OHLCV
-│   │   └── system_one_engine.py       # آداپتور واحد /v1/systemone برای Jev (MetisAI)، Mizan-4B، Laya و Kev
+│   │   ├── kronos_forecaster.py       # Kronos model integration for probabilistic forecasts
+│   │   └── system_one_engine.py       # /v1/systemone adapter (Jev, Mizan-4B, Laya, Kev)
 │   ├── harness/
-│   │   ├── mega_tools.py              # ۳ مگا-تول بهینه‌شده برای جلوگیری از Context Bloat
-│   │   ├── skill_loader.py            # بارگذار داینامیک SKILL.md با بررسی allowed-tools
-│   │   ├── memory_manager.py          # مدیریت حافظه کاری JSON و ژورنال خودآموز استراتژی
-│   │   └── compaction.py              # فشرده‌ساز کانتکست سشن به سبک OpenCode
+│   │   ├── mega_tools.py              # 3 Curated Mega-Tools preventing context bloat
+│   │   ├── skill_loader.py            # Dynamic markdown skill loader
+│   │   ├── memory_manager.py          # JSON position memory & self-learning journal
+│   │   └── compaction.py              # OpenCode-style session compaction
 │   ├── governance/
-│   │   ├── risk_gate.py               # گیت قطعی مدیریت ریسک، سقف سفارش ۱۸٪، Self-Trade Prevention و تسویه تومانی
-│   │   └── security_guard.py          # ایزولاسیون سکرت‌ها، بررسی TTL کلید و محافظ Prompt Injection
+│   │   ├── risk_gate.py               # Deterministic risk engine & 18% order cap
+│   │   └── security_guard.py          # Secret isolation & prompt injection guard
 │   ├── graph/
-│   │   ├── state.py                   # تعریف کامل TradingState (TypedDict)
-│   │   ├── nodes.py                   # پیاده‌سازی ۸ ایستگاه تخصصی گراف
-│   │   └── workflow.py                # ساخت و کامپایل StateGraph با MemorySaver، interrupt و Langfuse
+│   │   ├── state.py                   # TypedDict TradingState schema
+│   │   ├── nodes.py                   # 8 Graph node implementations
+│   │   └── workflow.py                # StateGraph compiled with MemorySaver & interrupt
 │   ├── testing/
-│   │   ├── backtester.py              # موتور بک‌تست روی کندل‌های تاریخی والکس
-│   │   └── shadow_engine.py           # موتور تطبیق سفارش مجازی (Shadow Testing) روی اردربوک زنده
+│   │   ├── backtester.py              # Historical backtesting engine
+│   │   └── shadow_engine.py           # Simulated live shadow execution engine
 │   └── api/
-│       └── server.py                  # سرور FastAPI + اندپوینت AG-UI / CopilotKit برای اتصال به داشبورد فرانت‌اند
+│       └── server.py                  # FastAPI + AG-UI / CopilotKit endpoints
 ├── scripts/
-│   ├── run_backtest.py                # اسکریپت اجرای بک‌تست تکرارپذیر برای داوران
-│   ├── run_shadow.py                  # اسکریپت اجرای تست سایه در بازار زنده
-│   ├── run_live.py                    # اسکریپت اجرای معاملات واقعی در حساب اختصاصی چالش
-│   └── retire_agent.py                # اسکریپت تسویه نهایی به تومان، لغو سفارش‌ها و بازنشستگی ایجنت
-└── frontend/                          # داشبورد Chat Plus مبتنی بر Next.js + shadcn/ui + CopilotKit (AG-UI)
+│   ├── run_backtest.py                # Reproducible historical backtest runner
+│   ├── run_shadow.py                  # Live market shadow test runner
+│   ├── run_live.py                    # Live execution runner for dedicated account
+│   └── retire_agent.py                # Final settlement and retirement script
+└── frontend/                          # Chat Plus Next.js + shadcn/ui dashboard
     ├── package.json
     └── src/
-        ├── app/page.tsx               # چیدمان Chat Plus (پنل چت ایجنت + داشبورد تحلیلی زنده والکس)
+        ├── app/page.tsx               # Chat Plus layout (Agent chat + Live canvas)
         └── components/genui/
-            ├── TradeDecisionCard.tsx  # کارت نمایش سیگنال، پیش‌بینی Kronos و آکاردئون دلیل معامله
-            ├── AgentGraphProgress.tsx # نمایشگر زنده وضعیت نودهای LangGraph
-            ├── DynamicRegimeView.tsx  # رندرگر Declarative JSON مقایسه بازارها و ریسک پرتفوی
-            └── HITLApprovalModal.tsx  # فرم تایید انسانی انتقال از Shadow به Live
+            ├── TradeDecisionCard.tsx  # Signal, Kronos forecast & reasoning accordion
+            ├── AgentGraphProgress.tsx # Live LangGraph execution tracker
+            ├── DynamicRegimeView.tsx  # Declarative JSON market comparison renderer
+            └── HITLApprovalModal.tsx  # Human-in-the-loop transition dialog
 ```
 
-### ۵.۲. دستورات گام‌به‌گام اجرای مجدد برای داوران (Reproducibility)
+### 5.2. Step-by-Step Evaluator Quick Start
 
-1. **آماده‌سازی محیط:**
+1. **Environment Setup:**
    ```bash
    cp .env.example .env
    pip install -e .
    ```
-2. **اجرای آزمون داده‌های تاریخی (Backtesting) و تولید گزارش آماری:**
+2. **Execute Historical Backtest & Generate Verification Metrics:**
    ```bash
    PYTHONPATH=. python3 scripts/run_backtest.py
    ```
-   - خروجی کامل در فایل `evaluation_results/backtest_report.json` و لاگ تک‌تک تصمیمات در `logs/decision_logs.jsonl` ذخیره می‌شود.
-3. **اجرای آزمون سایه (Shadow Testing) روی بازار زنده والکس بدون درگیر کردن پول واقعی:**
+   - Performance summaries are saved to `evaluation_results/backtest_report.json`, and decision logs are recorded in `logs/decision_logs.jsonl`.
+3. **Execute Live Market Shadow Testing (Zero Real Financial Risk):**
    ```bash
    PYTHONPATH=. python3 scripts/run_shadow.py --cycles 10
    ```
-   - خروجی در `evaluation_results/shadow_test_summary.json` ثبت شده و پس از ۱۰ تصمیم معتبر، گیت `MacroHITLInterruptNode` آماده ارتقا به حالت `LIVE` می‌گردد.
-4. **اجرای معاملات واقعی (Live Trading) روی حساب اختصاصی چالش:**
+   - Results are written to `evaluation_results/shadow_test_summary.json`. After 10 cycles, `MacroHITLInterruptNode` is ready for review.
+4. **Execute Live Trading (On Dedicated Challenge Account):**
    ```bash
    EXECUTION_MODE=LIVE PYTHONPATH=. python3 scripts/run_live.py --cycles 50 --interval 60
    ```
-5. **تسویه نهایی ۱۰۰٪ دارایی‌ها به تومان و بازنشستگی ایمن ایجنت در پایان هکاتون:**
+5. **Final Toman Liquidation & Agent Retirement:**
    ```bash
    PYTHONPATH=. python3 scripts/retire_agent.py
    ```
 
 ---
 
-## ۶. داشبورد Generative UI و سناریوی ویدیوی دموی ۵ دقیقه‌ای
+## 6. Generative UI Dashboard & 5-Minute Demo Script
 
-برای نمایش شفاف منطق تصمیم‌گیری در ویدیوی دموی ۵ دقیقه‌ای الزامی، یک داشبورد مدرن به سبک **Chat Plus** با پشته **Next.js + Tailwind CSS + shadcn/ui + CopilotKit (`AG-UI` & Declarative `A2UI`)** در پوشه `frontend/` پیاده‌سازی شده است:
-- **دقیقه ۰:۰۰ تا ۱:۰۰ (معماری و گاردریل‌های ریسک)**: نمایش زنده گراف ۸ ایستگاهی در کامپوننت `AgentGraphProgress` و نمایش سقف ۱۸٪ سفارش (`900,000 TMN`) و ذخیره نقدی ۴۰٪ روی سرمایه ۵ میلیون تومانی.
-- **دقیقه ۱:۰۰ تا ۲:۱۵ (اثبات Backtesting و Shadow Testing)**: نمایش متریک‌های `evaluation_results/backtest_report.json` و اجرای زنده حالت `SHADOW` همراه با رندر خودکار `TradeDecisionCard`.
-- **دقیقه ۲:۱۵ تا ۳:۴۵ (تایید فرم HITL، ورود به Live و آکاردئون لاگ تصمیم)**: تایید انتقال از Shadow به Live در کامپوننت `HITLApprovalModal` و باز کردن آکاردئون دلایل فارسی تصمیمات (`ai_reasoning_fa`) و پیش‌بینی مدل **Kronos** و **System-1**.
-- **دقیقه ۳:۴۵ تا ۵:۰۰ (Declarative UI و تسویه ۱۰۰٪ به تومان)**: پرسیدن سوال تحلیلی در پنل چت برای رندر داینامیک `DynamicRegimeView` و نمایش اجرای ماژول تسویه اجباری پایان دوره به تومان (`100% Realized PnL in TMN`).
+A **Chat Plus** dashboard built with **Next.js + Tailwind CSS + shadcn/ui + CopilotKit (`AG-UI` & Declarative `A2UI`)** provides real-time visibility into the agent's internal reasoning:
+- **00:00 – 01:00 (Architecture & Risk Invariants):** Visualizes the 8-stage graph in `AgentGraphProgress`, highlighting the 18% order ceiling (`900,000 TMN`) and 40% cash reserve enforcement.
+- **01:00 – 02:15 (Backtesting & Live Shadow Verification):** Reviews metrics in `evaluation_results/backtest_report.json` and demonstrates live shadow execution with automated rendering of `TradeDecisionCard`.
+- **02:15 – 03:45 (HITL Elevation, Live Market Entry & Decision Accordion):** Evaluator approves the transition from Shadow to Live via `HITLApprovalModal` and inspects the structured reasoning accordion showing **Kronos** and **System-1** probabilistic predictions.
+- **03:45 – 05:00 (Declarative UI & 100% Realized PnL in Toman):** Dynamic rendering of `DynamicRegimeView` and demonstration of the emergency liquidation module systematically converting all holdings into Toman (`100% Realized PnL in TMN`).
