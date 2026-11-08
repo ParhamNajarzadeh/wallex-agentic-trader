@@ -10,7 +10,7 @@
 3. [Pillar 3: Quantitative & Agentic Execution Signals (Buy, Sell & Toman Settlement)](#3-pillar-3-quantitative--agentic-execution-signals)
 4. [Pillar 4: Capital Allocation, Deterministic Risk Gate & AI Governance](#4-pillar-4-capital-allocation-deterministic-risk-gate--ai-governance)
 5. [Pillar 5: Reproducibility, Backtesting, Shadow Testing & `decision_logs.jsonl` Audit](#5-pillar-5-reproducibility-backtesting-shadow-testing--audit)
-6. [Generative UI Dashboard (Chat Plus) & 5-Minute Demo Script](#6-generative-ui-dashboard--5-minute-demo-script)
+6. [Generative UI Dashboard (Chat Plus)](#6-generative-ui-dashboard-chat-plus)
 
 ---
 
@@ -255,10 +255,10 @@ wallex-agentic-trader/
 
 ---
 
-## 6. Generative UI Dashboard & 5-Minute Demo Script
+## 6. Generative UI Dashboard (Chat Plus)
 
-A **Chat Plus** dashboard built with **Next.js + Tailwind CSS + shadcn/ui + CopilotKit (`AG-UI` & Declarative `A2UI`)** provides real-time visibility into the agent's internal reasoning:
-- **00:00 – 01:00 (Architecture & Risk Invariants):** Visualizes the 8-stage graph in `AgentGraphProgress`, highlighting the 18% order ceiling (`900,000 TMN`) and 40% cash reserve enforcement.
-- **01:00 – 02:15 (Backtesting & Live Shadow Verification):** Reviews metrics in `evaluation_results/backtest_report.json` and demonstrates live shadow execution with automated rendering of `TradeDecisionCard`.
-- **02:15 – 03:45 (HITL Elevation, Live Market Entry & Decision Accordion):** Evaluator approves the transition from Shadow to Live via `HITLApprovalModal` and inspects the structured reasoning accordion showing **Kronos** and **System-1** probabilistic predictions.
-- **03:45 – 05:00 (Declarative UI & 100% Realized PnL in Toman):** Dynamic rendering of `DynamicRegimeView` and demonstration of the emergency liquidation module systematically converting all holdings into Toman (`100% Realized PnL in TMN`).
+A modern **Chat Plus** dashboard built with **Next.js + Tailwind CSS + shadcn/ui + CopilotKit (`AG-UI` & Declarative `A2UI`)** provides real-time visibility into the trading agent's cognitive workflow:
+- **Architecture & Risk Invariants:** Visualizes the 8-stage graph in `AgentGraphProgress`, highlighting the 18% order ceiling (`900,000 TMN`) and 40% cash reserve enforcement.
+- **Backtesting & Live Shadow Verification:** Displays metrics from `evaluation_results/backtest_report.json` and supports live shadow execution with automated rendering of `TradeDecisionCard`.
+- **HITL Elevation, Live Market Entry & Decision Accordion:** Allows human-in-the-loop approval via `HITLApprovalModal` and inspects the structured reasoning accordion showing **Kronos** and **System-1** probabilistic predictions.
+- **Declarative UI & 100% Realized PnL in Toman:** Supports interactive market regime queries via `DynamicRegimeView` and provides real-time monitoring of emergency liquidation modules systematically converting all holdings into Toman (`100% Realized PnL in TMN`).
